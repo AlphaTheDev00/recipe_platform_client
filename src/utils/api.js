@@ -3,17 +3,17 @@
 // Get the API base URL from environment variable or use a default value
 const getApiBaseUrl = () => {
   // For production, use environment variable
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
 
   // For local development
-  if (process.env.NODE_ENV === "development") {
+  if (import.meta.env.DEV) {
     return "http://localhost:8000";
   }
 
   // Default production fallback
-  return "https://savora-recipe-b7493c60c573.herokuapp.com";
+  return "https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com";
 };
 
 export const API_BASE_URL = getApiBaseUrl();
