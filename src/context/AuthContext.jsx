@@ -9,13 +9,39 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
 
-  // Set up axios defaults when token changes
+  // Setup Axios defaults
   useEffect(() => {
+    // Set up default headers for all requests
+    axios.defaults.headers.common["Content-Type"] = "application/json";
+    axios.defaults.headers.common["Accept"] = "application/json";
+
+    // Set Authorization header when token exists
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Token ${token}`;
     } else {
       delete axios.defaults.headers.common["Authorization"];
     }
+
+    // Add request interceptor for CORS issues
+    axios.interceptors.request.use(
+      (config) => {
+        config.headers["X-Requested-With"] = "XMLHttpRequest";
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Add response interceptor to handle errors
+    axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        console.error("Axios error interceptor:", error);
+        // Handle specific errors here
+        return Promise.reject(error);
+      }
+    );
   }, [token]);
 
   // Check for existing user on mount
