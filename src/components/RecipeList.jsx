@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import RecipeFilter from "./RecipeFilter";
 import Pagination from "./Pagination";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
 const RecipeList = () => {
   const { user } = useAuth();
@@ -79,9 +80,10 @@ const RecipeList = () => {
   }, [activeTab, filters, user]);
 
   const fetchRecipes = async () => {
-    setLoading(true);
-    setError(null);
     try {
+      setLoading(true);
+      setError(null);
+
       let endpoint = "/api/recipes/";
 
       switch (activeTab) {
@@ -114,9 +116,9 @@ const RecipeList = () => {
       if (filters.searchTerm) params.append("search", filters.searchTerm);
 
       const queryString = params.toString();
-      const url = `http://localhost:8000${endpoint}${
+      const url = `${getApiUrl(endpoint)}${
         queryString ? "?" + queryString : ""
-      }`;
+      }`; // Use getApiUrl
 
       const response = await axios.get(url);
       setRecipes(response.data);

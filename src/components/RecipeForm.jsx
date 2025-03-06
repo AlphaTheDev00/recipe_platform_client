@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import axios from "axios";
 import CategorySelector from "./CategorySelector";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
 const RecipeForm = () => {
   const navigate = useNavigate();
@@ -32,9 +33,7 @@ const RecipeForm = () => {
     if (isEditing) {
       const fetchRecipe = async () => {
         try {
-          const response = await axios.get(
-            `http://localhost:8000/api/recipes/${id}/`
-          );
+          const response = await axios.get(getApiUrl(`api/recipes/${id}/`)); // Use getApiUrl
           const recipe = response.data;
 
           // Process categories
@@ -193,8 +192,8 @@ const RecipeForm = () => {
       }
 
       const url = isEditing
-        ? `http://localhost:8000/api/recipes/${id}/`
-        : "http://localhost:8000/api/recipes/";
+        ? getApiUrl(`api/recipes/${id}/`) // Use getApiUrl
+        : getApiUrl("api/recipes/"); // Use getApiUrl
 
       const response = await fetch(url, {
         method: isEditing ? "PUT" : "POST",

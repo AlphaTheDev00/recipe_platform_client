@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
-const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) => {
+const CategorySelector = ({
+  selectedCategories,
+  onChange,
+  showWarning = true,
+}) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,13 +14,12 @@ const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:8000/api/categories/');
+        const response = await axios.get(getApiUrl("api/categories/")); // Use getApiUrl
         setCategories(response.data);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories');
+        console.error("Error fetching categories:", err);
+        setError("Failed to load categories. Please refresh the page.");
         setLoading(false);
       }
     };
@@ -27,19 +31,23 @@ const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) 
   useEffect(() => {
     if (selectedCategories && selectedCategories.length > 0) {
       // Check if we need to process the selected categories
-      const needsProcessing = selectedCategories.some(cat => typeof cat !== 'number');
-      
+      const needsProcessing = selectedCategories.some(
+        (cat) => typeof cat !== "number"
+      );
+
       if (needsProcessing) {
         // Convert string IDs to numbers
-        const processedCategories = selectedCategories.map(cat => {
-          if (typeof cat === 'string') {
-            // Try to parse as number
-            const parsed = parseInt(cat, 10);
-            return isNaN(parsed) ? null : parsed;
-          }
-          return cat;
-        }).filter(id => id !== null);
-        
+        const processedCategories = selectedCategories
+          .map((cat) => {
+            if (typeof cat === "string") {
+              // Try to parse as number
+              const parsed = parseInt(cat, 10);
+              return isNaN(parsed) ? null : parsed;
+            }
+            return cat;
+          })
+          .filter((id) => id !== null);
+
         // Update with processed categories
         onChange(processedCategories);
       }
@@ -49,13 +57,13 @@ const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) 
   const handleCategoryChange = (e) => {
     const categoryId = parseInt(e.target.value, 10);
     let newSelected;
-    
+
     if (e.target.checked) {
       newSelected = [...selectedCategories, categoryId];
     } else {
-      newSelected = selectedCategories.filter(id => id !== categoryId);
+      newSelected = selectedCategories.filter((id) => id !== categoryId);
     }
-    
+
     onChange(newSelected);
   };
 
@@ -66,7 +74,9 @@ const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) 
     <div className="category-selector">
       <div className="card">
         <div className="card-body">
-          <p className="text-muted small mb-2">Select all categories that apply:</p>
+          <p className="text-muted small mb-2">
+            Select all categories that apply:
+          </p>
           <div className="d-flex flex-wrap gap-2 mb-2">
             {categories.map((category) => (
               <div key={category.id} className="form-check form-check-inline">
@@ -78,17 +88,21 @@ const CategorySelector = ({ selectedCategories, onChange, showWarning = true }) 
                   checked={selectedCategories.includes(category.id)}
                   onChange={handleCategoryChange}
                 />
-                <label className="form-check-label" htmlFor={`category-${category.id}`}>
+                <label
+                  className="form-check-label"
+                  htmlFor={`category-${category.id}`}
+                >
                   {category.name}
                 </label>
               </div>
             ))}
           </div>
-          
+
           {showWarning && selectedCategories.length === 0 && (
             <div className="alert alert-warning py-2 small">
               <i className="bi bi-exclamation-triangle me-2"></i>
-              Selecting at least one category helps users find your content more easily.
+              Selecting at least one category helps users find your content more
+              easily.
             </div>
           )}
         </div>

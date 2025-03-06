@@ -1,69 +1,108 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
-import { getApiUrl } from "../utils/config";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
 
+  // Set up axios defaults when token changes
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Token ${token}`;
-      fetchUserProfile();
     } else {
-      setLoading(false);
+      delete axios.defaults.headers.common["Authorization"];
     }
   }, [token]);
 
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get(getApiUrl("api/users/me/"));
-      // Ensure profile data is properly structured
-      const userData = response.data;
-      setUser(userData);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Check for existing user on mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-  const login = async (username, password) => {
+      try {
+        const response = await axios.get(getApiUrl("api/users/me/"));
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // If token is invalid, clear it
+        if (error.response?.status === 401) {
+          logout();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [token]);
+
+  const login = async (credentials) => {
     try {
-      const response = await axios.post(getApiUrl("api/users/login/"), {
-        username,
-        password,
-      });
+      // Use getApiUrl instead of hardcoded URL
+      const response = await axios.post(
+        getApiUrl("api-token-auth/"),
+        credentials
+      );
+
       const { token } = response.data;
+
+      // Save token in local storage
       localStorage.setItem("token", token);
       setToken(token);
+
+      // Fetch user profile
+      const userResponse = await axios.get(getApiUrl("api/users/me/"));
+      setUser(userResponse.data);
+
       return { success: true };
     } catch (error) {
+      console.error("Login error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Login failed",
+        error:
+          error.response?.data?.non_field_errors?.[0] ||
+          "Login failed. Please check your credentials.",
       };
     }
   };
 
   const register = async (userData) => {
     try {
+      // Use getApiUrl instead of hardcoded URL
       const response = await axios.post(
         getApiUrl("api/users/register/"),
         userData
       );
-      const { token } = response.data;
+
+      const { token, user_id, email } = response.data;
+
+      // Save token in local storage
       localStorage.setItem("token", token);
       setToken(token);
+
+      // Set basic user info from response
+      setUser({ id: user_id, email, username: userData.username });
+
+      // Fetch complete user profile
+      await fetchUserProfile();
+
       return { success: true };
     } catch (error) {
+      console.error("Registration error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Registration failed",
+        error:
+          error.response?.data?.username?.[0] ||
+          error.response?.data?.email?.[0] ||
+          error.response?.data?.password?.[0] ||
+          "Registration failed. Please try again.",
       };
     }
   };
@@ -72,7 +111,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
-    delete axios.defaults.headers.common["Authorization"];
+  };
+
+  const fetchUserProfile = async () => {
+    if (!token) return;
+
+    try {
+      // Use getApiUrl instead of hardcoded URL
+      const response = await axios.get(getApiUrl("api/users/me/"));
+      setUser(response.data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
   };
 
   const updateProfile = async (userData) => {
@@ -104,6 +154,7 @@ export const AuthProvider = ({ children }) => {
           userData.profile.profile_picture
         );
 
+        // Use getApiUrl instead of hardcoded URL
         response = await axios.put(
           getApiUrl("api/users/update_profile/"),
           formData,
@@ -115,6 +166,7 @@ export const AuthProvider = ({ children }) => {
         );
       } else {
         // Regular JSON request
+        // Use getApiUrl instead of hardcoded URL
         response = await axios.put(
           getApiUrl("api/users/update_profile/"),
           userData
