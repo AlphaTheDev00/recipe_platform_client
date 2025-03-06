@@ -1,0 +1,7 @@
+VARIABLE NAME COLLISION ERROR:
+In RecipeForm.jsx, line 154-160, you're creating a new FormData object with the same name as your state variable:
+
+const formData = new FormData();  // This shadows your state variable
+formData.append("title", formData.title);  // This is trying to access .title from the new empty FormData object
+
+FIX: Rename the local FormData variable
