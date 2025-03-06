@@ -5,6 +5,7 @@ import RatingAndComments from "./RatingAndComments";
 import { useAuth } from "../context/AuthContext";
 import FavoriteButton from "./FavoriteButton";
 import CategoryBadges from "./CategoryBadges";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
 const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
@@ -65,7 +66,7 @@ const RecipeDetail = () => {
     const fetchRecipe = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/recipes/${id}/`
+          getApiUrl(`api/recipes/${id}/`) // Use getApiUrl instead of hardcoded URL
         );
         setRecipe(response.data);
         setLoading(false);
@@ -82,7 +83,7 @@ const RecipeDetail = () => {
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this recipe?")) {
       try {
-        await axios.delete(`http://localhost:8000/api/recipes/${id}/`);
+        await axios.delete(getApiUrl(`api/recipes/${id}/`)); // Use getApiUrl
         navigate("/recipes");
       } catch (err) {
         setError("Error deleting recipe. Please try again later.");

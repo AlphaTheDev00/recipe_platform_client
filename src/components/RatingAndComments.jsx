@@ -1,35 +1,42 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
+import { getApiUrl } from "../utils/api"; // Import the API utility
 
 const RatingAndComments = ({ recipeId }) => {
-  const { user } = useAuth()
-  const [rating, setRating] = useState(0)
-  const [comment, setComment] = useState('')
-  const [comments, setComments] = useState([])
-  const [userRating, setUserRating] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { user } = useAuth();
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
+  const [userRating, setUserRating] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCommentsAndRating()
-  }, [recipeId, user])
+    fetchCommentsAndRating();
+  }, [recipeId, user]);
 
   const fetchCommentsAndRating = async () => {
     try {
       // Fetch comments using the recipe_comments endpoint
-      const commentsResponse = await axios.get(`http://localhost:8000/api/comments/recipe_comments/`, {
-        params: { recipe_id: recipeId }
-      });
+      const commentsResponse = await axios.get(
+        getApiUrl("api/comments/recipe_comments/"),
+        {
+          params: { recipe_id: recipeId },
+        }
+      );
       setComments(commentsResponse.data);
-      
+
       // Only fetch ratings if user is logged in
       if (user) {
         try {
-          const ratingsResponse = await axios.get(`http://localhost:8000/api/ratings/user_rating/`, {
-            params: { recipe_id: recipeId }
-          });
-          
+          const ratingsResponse = await axios.get(
+            getApiUrl("api/ratings/user_rating/"),
+            {
+              params: { recipe_id: recipeId },
+            }
+          );
+
           // If we get a successful response, set the rating
           setUserRating(ratingsResponse.data);
           setRating(ratingsResponse.data.score);
@@ -41,61 +48,61 @@ const RatingAndComments = ({ recipeId }) => {
           // Don't set error for ratings - just log it
         }
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error("Error in fetchCommentsAndRating:", err);
-      setError('Error fetching comments and ratings');
+      setError("Error fetching comments and ratings");
       setLoading(false);
     }
-  }
+  };
 
   const handleRatingChange = async (newRating) => {
     if (!user) {
-      setError('Please login to rate recipes')
-      return
+      setError("Please login to rate recipes");
+      return;
     }
 
     try {
       if (userRating) {
-        await axios.put(`http://localhost:8000/api/ratings/${userRating.id}/`, {
+        await axios.put(getApiUrl(`api/ratings/${userRating.id}/`), {
           recipe: recipeId,
-          score: newRating
-        })
+          score: newRating,
+        });
       } else {
-        await axios.post('http://localhost:8000/api/ratings/', {
+        await axios.post(getApiUrl("api/ratings/"), {
           recipe: recipeId,
-          score: newRating
-        })
+          score: newRating,
+        });
       }
-      setRating(newRating)
-      fetchCommentsAndRating()
+      setRating(newRating);
+      fetchCommentsAndRating();
     } catch (err) {
-      setError('Error saving rating')
+      setError("Error saving rating");
     }
-  }
+  };
 
   const handleCommentSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user) {
-      setError('Please login to comment')
-      return
+      setError("Please login to comment");
+      return;
     }
 
     try {
-      await axios.post('http://localhost:8000/api/comments/', {
+      await axios.post(getApiUrl("api/comments/"), {
         recipe: recipeId,
-        content: comment
-      })
-      setComment('')
-      fetchCommentsAndRating()
+        content: comment,
+      });
+      setComment("");
+      fetchCommentsAndRating();
     } catch (err) {
-      setError('Error posting comment')
+      setError("Error posting comment");
     }
-  }
+  };
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div className="alert alert-danger">{error}</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
     <div className="mt-4">
@@ -106,7 +113,9 @@ const RatingAndComments = ({ recipeId }) => {
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
-              className={`btn btn-link p-0 ${star <= rating ? 'text-warning' : 'text-muted'}`}
+              className={`btn btn-link p-0 ${
+                star <= rating ? "text-warning" : "text-muted"
+              }`}
               onClick={() => handleRatingChange(star)}
               disabled={!user}
             >
@@ -114,9 +123,7 @@ const RatingAndComments = ({ recipeId }) => {
             </button>
           ))}
           {!user && (
-            <small className="text-muted ms-2">
-              Login to rate this recipe
-            </small>
+            <small className="text-muted ms-2">Login to rate this recipe</small>
           )}
         </div>
       </div>
@@ -124,32 +131,35 @@ const RatingAndComments = ({ recipeId }) => {
       {/* Comments Section */}
       <div>
         <h4>Comments</h4>
-        
+
         {/* Comment Form */}
         {user && (
           <form onSubmit={handleCommentSubmit} className="mb-4">
             <div className="d-flex mb-3">
-              <div 
+              <div
                 className="comment-avatar me-3 flex-shrink-0"
                 style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f5f5f5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  color: '#333',
-                  backgroundImage: user?.profile_picture_url ? `url(${user.profile_picture_url})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  overflow: 'hidden',
-                  marginTop: '5px'
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  backgroundColor: "#f5f5f5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  color: "#333",
+                  backgroundImage: user?.profile_picture_url
+                    ? `url(${user.profile_picture_url})`
+                    : "none",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  overflow: "hidden",
+                  marginTop: "5px",
                 }}
               >
-                {!user?.profile_picture_url && user?.username.charAt(0).toUpperCase()}
+                {!user?.profile_picture_url &&
+                  user?.username.charAt(0).toUpperCase()}
               </div>
               <div className="flex-grow-1">
                 <textarea
@@ -173,32 +183,37 @@ const RatingAndComments = ({ recipeId }) => {
         {/* Comments List */}
         <div className="comments-list">
           {comments.length === 0 ? (
-            <p className="text-muted">No comments yet. Be the first to comment!</p>
+            <p className="text-muted">
+              No comments yet. Be the first to comment!
+            </p>
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="card mb-3">
                 <div className="card-body">
                   <div className="d-flex align-items-start mb-3">
-                    <div 
+                    <div
                       className="comment-avatar me-3"
                       style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        backgroundColor: '#f5f5f5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        color: '#333',
-                        backgroundImage: comment.profile_picture_url ? `url(${comment.profile_picture_url})` : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        overflow: 'hidden'
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        backgroundColor: "#f5f5f5",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        color: "#333",
+                        backgroundImage: comment.profile_picture_url
+                          ? `url(${comment.profile_picture_url})`
+                          : "none",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        overflow: "hidden",
                       }}
                     >
-                      {!comment.profile_picture_url && comment.user.username.charAt(0).toUpperCase()}
+                      {!comment.profile_picture_url &&
+                        comment.user.username.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <h6 className="card-subtitle mb-1">
@@ -217,7 +232,7 @@ const RatingAndComments = ({ recipeId }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RatingAndComments 
+export default RatingAndComments;
