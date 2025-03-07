@@ -31,6 +31,18 @@ export const safeStorage = {
       return false;
     }
   },
+
+  // Test if storage is available
+  isAvailable() {
+    try {
+      const test = "__storage_test__";
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
 };
 
 export default safeStorage;

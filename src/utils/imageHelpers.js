@@ -16,14 +16,21 @@ export const processImageUrl = (imageUrl, id) => {
   if (
     imageUrl.startsWith("http://") ||
     imageUrl.startsWith("https://") ||
-    (typeof imageUrl === "string" && imageUrl.includes("cloudinary.com"))
+    (typeof imageUrl === "string" &&
+      (imageUrl.includes("cloudinary.com") ||
+        imageUrl.includes("res.cloudinary.com")))
   ) {
     return imageUrl;
   }
 
-  // If it's a relative URL from the backend, prepend the API base URL
-  if (typeof imageUrl === "string" && imageUrl.startsWith("/media/")) {
-    return `${getApiUrl("")}${imageUrl}`;
+  // For media URLs from Heroku, check if they're Cloudinary URLs
+  if (typeof imageUrl === "string" && imageUrl.includes("/media/")) {
+    if (imageUrl.includes("cloudinary")) {
+      // This is already a Cloudinary URL, use it
+      return imageUrl;
+    }
+    // Otherwise, use placeholder since Heroku doesn't persist regular uploads
+    return getPlaceholderImage(id);
   }
 
   // Fallback to placeholder

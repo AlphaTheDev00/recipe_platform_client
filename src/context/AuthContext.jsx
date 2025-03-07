@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
-import { getApiUrl } from "../utils/api"; // Import the API utility
+import { getApiUrl, API_BASE_URL } from "../utils/api"; // Ensure API_BASE_URL is imported
 import { safeStorage } from "../utils/storage";
+import memoryStorage from "../utils/memoryStorage";
 
 const AuthContext = createContext();
 
@@ -76,66 +77,50 @@ export const AuthProvider = ({ children }) => {
         username: credentials.username,
         password: credentials.password ? "***" : "missing",
       });
-      console.log("API URL:", getApiUrl("api-token-auth/"));
 
-      // Validate credentials before sending
-      if (!credentials.username || !credentials.password) {
+      // Use the direct API_BASE_URL for authentication
+      const response = await fetch(`${API_BASE_URL}/api-token-auth/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: credentials.username,
+          password: credentials.password,
+        }),
+        mode: "cors",
+        credentials: "omit",
+      });
+
+      if (!response.ok) {
         return {
           success: false,
-          error: "Username and password are required.",
+          error: "Invalid username or password",
         };
       }
 
-      // Use getApiUrl instead of hardcoded URL
-      const response = await axios.post(
-        getApiUrl("api-token-auth/"),
-        {
-          username: credentials.username,
-          password: credentials.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const data = await response.json();
 
-      console.log("Login response received:", response.status);
-      const { token } = response.data;
-
+      // Safely store token
       try {
-        // Save token in local storage with error handling
-        safeStorage.setItem("token", token);
-        setToken(token);
-
-        // Set the token in axios headers immediately
-        axios.defaults.headers.common["Authorization"] = `Token ${token}`;
-      } catch (storageError) {
-        console.error("Storage error:", storageError);
-        // Continue with the token in memory even if localStorage fails
+        safeStorage.setItem("token", data.token);
+      } catch (e) {
+        console.warn("Cannot store in localStorage, using memory storage", e);
       }
 
-      // Fetch user profile
-      try {
-        const userResponse = await axios.get(getApiUrl("api/users/me/"));
-        setUser(userResponse.data);
-      } catch (profileError) {
-        console.error("Error fetching user profile:", profileError);
-        // We can still return success since login worked
-      }
+      // Always save to memory storage
+      memoryStorage.setItem("token", data.token);
+      setToken(data.token);
+
+      // Set user
+      setUser({ username: credentials.username });
 
       return { success: true };
     } catch (error) {
-      console.error("Login error details:", error);
-      if (error.response) {
-        console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data);
-      }
+      console.error("Login process error:", error);
       return {
         success: false,
-        error:
-          error.response?.data?.non_field_errors?.[0] ||
-          "Login failed. Please check your credentials.",
+        error: "Server error. Please try again later.",
       };
     }
   };
@@ -183,17 +168,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    try {
-      safeStorage.removeItem("token");
-    } catch (error) {
-      console.warn("Error accessing localStorage", error);
-    }
-
-    // Always update the state regardless of storage success
+    safeStorage.removeItem("token");
+    memoryStorage.removeItem("token");
     setToken(null);
     setUser(null);
-
-    // Clean up headers
     delete axios.defaults.headers.common["Authorization"];
   };
 

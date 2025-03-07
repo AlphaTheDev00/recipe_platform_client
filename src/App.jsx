@@ -1,4 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+} from "react-router-dom";
+import { useEffect } from "react";
 import "./App.css";
 import { useAuth } from "./context/AuthContext";
 import RecipeList from "./components/RecipeList";
@@ -10,9 +17,27 @@ import MyFavorites from "./pages/MyFavorites";
 import Profile from "./pages/Profile";
 import MyRecipes from "./pages/MyRecipes";
 import UserAvatar from "./components/UserAvatar";
+import ApiStatusIndicator from "./components/ApiStatusIndicator";
+import { API_BASE_URL } from "./utils/api";
 
 function App() {
   const { user, logout } = useAuth();
+
+  // Test API connection on startup
+  useEffect(() => {
+    const testApiConnection = async () => {
+      try {
+        console.log("Testing API connection to:", API_BASE_URL);
+        const response = await fetch(`${API_BASE_URL}/api/`);
+        const data = await response.json();
+        console.log("API connection successful:", data);
+      } catch (error) {
+        console.error("API connection failed:", error);
+      }
+    };
+
+    testApiConnection();
+  }, []);
 
   return (
     <Router>
@@ -106,7 +131,7 @@ function App() {
             </div>
           </div>
         </nav>
-
+        <ApiStatusIndicator /> {/* Add this line */}
         <main className="container mt-4">
           <Routes>
             <Route path="/" element={<Home />} />

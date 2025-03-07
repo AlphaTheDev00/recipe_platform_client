@@ -85,23 +85,25 @@ const Profile = () => {
       }
     }
     
-    // Prepare data for API
-    const updateData = {
-      username: formData.username,
-      email: formData.email,
-      profile: {
-        bio: formData.bio,
-      }
-    };
+    // Prepare form data for API
+    const formDataObj = new FormData();
+    formDataObj.append('username', formData.username);
+    formDataObj.append('email', formData.email);
     
-    // Only include password if provided
+    // Add profile data
+    const profileData = {
+      bio: formData.bio
+    };
+    formDataObj.append('profile', JSON.stringify(profileData));
+    
+    // Add password if provided
     if (formData.newPassword) {
-      updateData.password = formData.newPassword;
+      formDataObj.append('password', formData.newPassword);
     }
     
-    // Add profile picture to the update data if it exists
+    // Add profile picture if exists
     if (profilePicture) {
-      updateData.profile.profile_picture = profilePicture;
+      formDataObj.append('profile_picture', profilePicture);
     }
     
     try {
