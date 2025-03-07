@@ -4,7 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import RecipeFilter from "./RecipeFilter";
 import Pagination from "./Pagination";
-import { getApiUrl, safeFetch } from "../utils/api"; // Add safeFetch here
+import { getApiUrl, safeFetch, forceRefresh } from "../utils/api";
 
 const RecipeList = () => {
   const { user } = useAuth();
@@ -81,45 +81,71 @@ const RecipeList = () => {
   };
 
   useEffect(() => {
-    fetchRecipes();
-    // Reset to first page when tab or filters change
-    setCurrentPage(1);
-  }, [activeTab, filters, user]);
-
-  useEffect(() => {
-    // Force reload from the server, no cache
-    const forceRefresh = async () => {
-      console.log("Forcing data refresh from API...");
+    const fetchData = async () => {
       try {
-        const response = await fetch(getApiUrl("api/recipes/"), {
-          method: "GET",
-          cache: "no-store", // Force fresh data
-          headers: { "Cache-Control": "no-cache" },
-        });
+        setLoading(true);
+        setError(null);
+        setCurrentPage(1);
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Received fresh data:", data.length, "recipes");
-          setRecipes(data);
-          setLoading(false);
-        } else {
-          throw new Error(`API returned status: ${response.status}`);
+        let endpoint = "api/recipes/";
+        switch (activeTab) {
+          case "my_recipes":
+            endpoint = "api/recipes/my_recipes/";
+            break;
+          case "top_rated":
+            endpoint = "api/recipes/top_rated/";
+            break;
+          case "recent":
+            endpoint = "api/recipes/recent/";
+            break;
+          case "trending":
+            endpoint = "api/recipes/trending/";
+            break;
+          case "recommendations":
+            endpoint = "api/recipes/recommendations/";
+            break;
         }
+
+        // Build query parameters string
+        let queryParams = [];
+        if (filters.minRating) queryParams.push(`min_rating=${filters.minRating}`);
+        if (filters.maxCookingTime) queryParams.push(`max_cooking_time=${filters.maxCookingTime}`);
+        if (filters.difficulty) queryParams.push(`difficulty=${filters.difficulty}`);
+        if (filters.categoryId) queryParams.push(`category_id=${filters.categoryId}`);
+        if (filters.searchTerm) queryParams.push(`search=${filters.searchTerm}`);
+
+        const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+        const fullEndpoint = `${endpoint}${queryString}`;
+
+        // Use forceRefresh to get fresh data every time
+        console.log("Forcing refresh of recipe data...");
+        const data = await forceRefresh(fullEndpoint);
+        console.log("Received fresh data:", data.length, "recipes");
+        setRecipes(data);
       } catch (err) {
-        console.error("Force refresh failed:", err);
-        fetchRecipes(); // Fall back to regular fetch
+        console.error("Fetch error:", err);
+        setError("Error loading recipes");
+        // Try fallback method
+        try {
+          const fallbackData = await safeFetch(endpoint);
+          setRecipes(fallbackData);
+        } catch (fallbackErr) {
+          console.error("Fallback fetch also failed:", fallbackErr);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
-    forceRefresh();
+    fetchData();
   }, [activeTab, filters, user]);
 
-  // Use our emergency fetch helper instead of axios
-  const fetchRecipes = async () => {
+  // Function to manually refresh data
+  const refreshData = async () => {
     try {
       setLoading(true);
       setError(null);
-
+      
       let endpoint = "api/recipes/";
       switch (activeTab) {
         case "my_recipes":
@@ -138,7 +164,7 @@ const RecipeList = () => {
           endpoint = "api/recipes/recommendations/";
           break;
       }
-
+      
       // Build query parameters string
       let queryParams = [];
       if (filters.minRating)
@@ -150,23 +176,22 @@ const RecipeList = () => {
       if (filters.categoryId)
         queryParams.push(`category_id=${filters.categoryId}`);
       if (filters.searchTerm) queryParams.push(`search=${filters.searchTerm}`);
-
+      
       const queryString =
         queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
-
-      // Use our emergency fetch helper
-      const data = await safeFetch(`${endpoint}${queryString}`);
+      const fullEndpoint = `${endpoint}${queryString}`;
+      
+      // Force a fresh data fetch with timestamp to bust cache
+      console.log("Manual refresh triggered");
+      const data = await forceRefresh(fullEndpoint);
+      console.log("Manual refresh complete, got", data.length, "recipes");
       setRecipes(data);
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Error loading recipes. Using fallback data.");
-
-      // EMERGENCY: Set backup data
-      setRecipes([
-        {
-          id: 1,
-          title: "Pasta Carbonara",
-          description: "Classic Italian pasta",
+      console.error("Manual refresh error:", err);
+      setError("Error refreshing recipes");
+    } finally {
+      setLoading(false);
+    }
           cooking_time: 20,
           difficulty: "medium",
         },

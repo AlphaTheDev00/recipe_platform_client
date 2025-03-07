@@ -5,7 +5,7 @@ import RatingAndComments from "./RatingAndComments";
 import { useAuth } from "../context/AuthContext";
 import FavoriteButton from "./FavoriteButton";
 import CategoryBadges from "./CategoryBadges";
-import { getApiUrl } from "../utils/api"; // Import the API utility
+import { getApiUrl, forceRefresh, safeFetch } from "../utils/api"; // Import API utilities
 
 const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
@@ -68,14 +68,28 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await axios.get(
-          getApiUrl(`api/recipes/${id}/`) // Use getApiUrl instead of hardcoded URL
-        );
-        setRecipe(response.data);
+        console.log(`Fetching fresh recipe data for ID: ${id}`);
+        // Use forceRefresh to bypass cache
+        const data = await forceRefresh(`api/recipes/${id}/`);
+        console.log("Received fresh recipe data:", data);
+        setRecipe(data);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching recipe:", err);
         setError("Error fetching recipe details. Please try again later.");
+        
+        // Try fallback method
+        try {
+          console.log("Attempting fallback fetch method...");
+          const fallbackData = await safeFetch(`api/recipes/${id}/`);
+          if (fallbackData) {
+            setRecipe(fallbackData);
+            setError(null); // Clear error if fallback succeeds
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback fetch also failed:", fallbackErr);
+        }
+        
         setLoading(false);
       }
     };
