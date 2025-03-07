@@ -183,9 +183,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    safeStorage.removeItem("token");
+    try {
+      safeStorage.removeItem("token");
+    } catch (error) {
+      console.warn("Error accessing localStorage", error);
+    }
+
+    // Always update the state regardless of storage success
     setToken(null);
     setUser(null);
+
+    // Clean up headers
     delete axios.defaults.headers.common["Authorization"];
   };
 

@@ -25,7 +25,11 @@ const RecipeList = () => {
   // Helper function to ensure image URLs are properly formatted
   const getImageUrl = (imageUrl, recipeId) => {
     // First try to use the image_url field which should be a full URL
-    if (imageUrl && imageUrl.startsWith("http://localhost:8001/media/")) {
+    if (
+      imageUrl &&
+      typeof imageUrl === "string" &&
+      imageUrl.startsWith("http")
+    ) {
       return imageUrl;
     }
 
@@ -34,14 +38,17 @@ const RecipeList = () => {
       return getPlaceholderImage(recipeId);
     }
 
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    if (
+      typeof imageUrl === "string" &&
+      (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))
+    ) {
       // If it's already a full URL, use it as is
       return imageUrl;
     }
 
-    if (imageUrl.startsWith("/media/")) {
+    if (typeof imageUrl === "string" && imageUrl.startsWith("/media/")) {
       // If it's a relative URL from the backend, prepend the API base URL
-      return `http://localhost:8000${imageUrl}`;
+      return `${getApiUrl("")}${imageUrl}`;
     }
 
     // Fallback to placeholder

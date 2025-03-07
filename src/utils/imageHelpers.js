@@ -16,13 +16,13 @@ export const processImageUrl = (imageUrl, id) => {
   if (
     imageUrl.startsWith("http://") ||
     imageUrl.startsWith("https://") ||
-    imageUrl.includes("cloudinary.com")
+    (typeof imageUrl === "string" && imageUrl.includes("cloudinary.com"))
   ) {
     return imageUrl;
   }
 
   // If it's a relative URL from the backend, prepend the API base URL
-  if (imageUrl.startsWith("/media/")) {
+  if (typeof imageUrl === "string" && imageUrl.startsWith("/media/")) {
     return `${getApiUrl("")}${imageUrl}`;
   }
 

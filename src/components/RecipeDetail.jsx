@@ -43,18 +43,21 @@ const RecipeDetail = () => {
       return getPlaceholderImage(recipeId);
     }
 
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    if (
+      typeof imageUrl === "string" &&
+      (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))
+    ) {
       // If it's already a full URL, use it as is
       return imageUrl;
     }
 
-    if (imageUrl.startsWith("/media/")) {
+    if (typeof imageUrl === "string" && imageUrl.startsWith("/media/")) {
       // If it's a relative URL from the backend, prepend the API base URL
-      return `http://localhost:8000${imageUrl}`;
+      return `${getApiUrl("")}${imageUrl}`;
     }
 
     // For image_url field which might be a full URL already
-    if (recipe.image_url) {
+    if (recipe && recipe.image_url) {
       return recipe.image_url;
     }
 
