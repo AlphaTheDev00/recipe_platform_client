@@ -72,219 +72,218 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log("Login attempt with:", credentials.username);
-      console.log("API URL:", getApiUrl("api-token-auth/"));        password: credentials.password ? "***" : "missing"
+      console.log("Login attempt with credentials:", {
+        username: credentials.username,
+        password: credentials.password ? "***" : "missing",
+      });
+      console.log("API URL:", getApiUrl("api-token-auth/"));
 
-      // Use getApiUrl instead of hardcoded URL"api-token-auth/"));
+      // Validate credentials before sending
+      if (!credentials.username || !credentials.password) {
+        return {
+          success: false,
+          error: "Username and password are required.",
+        };
+      }
+
+      // Use getApiUrl instead of hardcoded URL
       const response = await axios.post(
-        getApiUrl("api-token-auth/"),edentials before sending
-        credentials,(!credentials.username || !credentials.password) {
+        getApiUrl("api-token-auth/"),
+        {
+          username: credentials.username,
+          password: credentials.password,
+        },
         {
           headers: {
-            "Content-Type": "application/json",ror: "Username and password are required."
-          },;
+            "Content-Type": "application/json",
+          },
         }
-      );      
+      );
 
-      console.log("Login response:", response.data);t(
-      const { token } = response.data;        getApiUrl("api-token-auth/"),
+      console.log("Login response received:", response.status);
+      const { token } = response.data;
 
-      // Save token in local storage
-      safeStorage.setItem("token", token);edentials.password
-      setToken(token);        },
+      try {
+        // Save token in local storage with error handling
+        safeStorage.setItem("token", token);
+        setToken(token);
 
-      // Set the token in axios headers immediately
-      axios.defaults.headers.common["Authorization"] = `Token ${token}`;            'Content-Type': 'application/json',
+        // Set the token in axios headers immediately
+        axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+      } catch (storageError) {
+        console.error("Storage error:", storageError);
+        // Continue with the token in memory even if localStorage fails
+      }
 
       // Fetch user profile
-      const userResponse = await axios.get(getApiUrl("api/users/me/"));
-      setUser(userResponse.data);
-se received:", response.status);
-      return { success: true }; = response.data;
+      try {
+        const userResponse = await axios.get(getApiUrl("api/users/me/"));
+        setUser(userResponse.data);
+      } catch (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        // We can still return success since login worked
+      }
+
+      return { success: true };
     } catch (error) {
       console.error("Login error details:", error);
       if (error.response) {
         console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data); setToken(token);
+        console.error("Response data:", error.response.data);
       }
-      return {n in axios headers immediately
-        success: false,defaults.headers.common["Authorization"] = `Token ${token}`;
+      return {
+        success: false,
         error:
           error.response?.data?.non_field_errors?.[0] ||
-          "Login failed. Please check your credentials.",// Continue with the token in memory even if localStorage fails
-      }; }
+          "Login failed. Please check your credentials.",
+      };
     }
-  };      // Fetch user profile
+  };
 
-  const register = async (userData) => {onst userResponse = await axios.get(getApiUrl("api/users/me/"));
+  const register = async (userData) => {
     try {
       console.log("Registering user:", userData.username);
-      const response = await axios.post(r profile:", profileError);
-        getApiUrl("api/users/register/"),n still return success since login worked
+      const response = await axios.post(
+        getApiUrl("api/users/register/"),
         userData
       );
 
       console.log("Registration response:", response.data);
-      const { token, user_id, email } = response.data;      console.error("Login error details:", error);
+      const { token, user_id, email } = response.data;
 
-      // Save token in local storagerror.response.status);
-      safeStorage.setItem("token", token);"Response data:", error.response.data);
-      setToken(token);      }
+      // Save token in local storage
+      safeStorage.setItem("token", token);
+      setToken(token);
 
       // Set axios authorization header immediately
-      axios.defaults.headers.common["Authorization"] = `Token ${token}`;        error:
-errors?.[0] ||
+      axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+
       // Set basic user info from response
-      setUser({ id: user_id, email, username: userData.username });      };
+      setUser({ id: user_id, email, username: userData.username });
 
       // Fetch complete user profile
       await fetchUserProfile();
-ata) => {
+
       return { success: true };
     } catch (error) {
-      console.error("Registration error details:", error);t axios.post(
-        getApiUrl("api/users/register/"),
-        userDataus);
-      ); console.error("Response data:", error.response.data);
-
-      console.log("Registration response:", response.data);
-      const { token, user_id, email } = response.data;s: false,
-
-      // Save token in local storage ||
-      localStorage.setItem("token", token);
-      setToken(token);
-  "Registration failed. Please try again.",
-      // Set axios authorization header immediately };
-      axios.defaults.headers.common["Authorization"] = `Token ${token}`;}
-  };
-      // Set basic user info from response
-      setUser({ id: user_id, email, username: userData.username });
-oveItem("token");
-      // Fetch complete user profile;
-      await fetchUserProfile();setUser(null);
-    delete axios.defaults.headers.common["Authorization"];
-      return { success: true };
-    } catch (error) {
-      console.error("Registration error details:", error);  const fetchUserProfile = async () => {
-      if (error.response) {token) return;
+      console.error("Registration error details:", error);
+      if (error.response) {
         console.error("Response status:", error.response.status);
         console.error("Response data:", error.response.data);
-      }d of hardcoded URL
-      return {= await axios.get(getApiUrl("api/users/me/"));
+      }
+      return {
         success: false,
-        error: catch (error) {
-          error.response?.data?.username?.[0] ||  console.error("Error fetching user profile:", error);
-          error.response?.data?.email?.[0] ||    }
+        error:
+          error.response?.data?.username?.[0] ||
+          error.response?.data?.email?.[0] ||
           error.response?.data?.password?.[0] ||
           "Registration failed. Please try again.",
       };
     }
   };
-      const containsFile =
-  const logout = () => {ofile && userData.profile.profile_picture instanceof File;
-    localStorage.removeItem("token");
+
+  const logout = () => {
+    safeStorage.removeItem("token");
     setToken(null);
     setUser(null);
-  };        // If there's a file, use FormData
- FormData();
+    delete axios.defaults.headers.common["Authorization"];
+  };
+
   const fetchUserProfile = async () => {
     if (!token) return;
 
-    try {f (key !== "profile") {
-      // Use getApiUrl instead of hardcoded URL   formData.append(key, userData[key]);
-      const response = await axios.get(getApiUrl("api/users/me/"));          }
+    try {
+      const response = await axios.get(getApiUrl("api/users/me/"));
       setUser(response.data);
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
-  };        delete profileData.profile_picture;
-("profile", JSON.stringify(profileData));
+  };
+
   const updateProfile = async (userData) => {
     try {
       // Check if userData contains a File object (for profile picture)
-      const containsFile ="profile.profile_picture",
-        userData.profile && userData.profile.profile_picture instanceof File;          userData.profile.profile_picture
+      const containsFile =
+        userData.profile && userData.profile.profile_picture instanceof File;
 
       let response;
       if (containsFile) {
-        // If there's a file, use FormDataawait axios.put(
-        const formData = new FormData();etApiUrl("api/users/update_profile/"),
+        // If there's a file, use FormData
+        const formData = new FormData();
 
         // Add non-file data
-        for (const key in userData) {aders: {
-          if (key !== "profile") {   "Content-Type": "multipart/form-data",
-            formData.append(key, userData[key]);  },
+        for (const key in userData) {
+          if (key !== "profile") {
+            formData.append(key, userData[key]);
           }
         }
 
         // Add profile data except the file
         const profileData = { ...userData.profile };
-        delete profileData.profile_picture; await axios.put(
-        formData.append("profile", JSON.stringify(profileData));getApiUrl("api/users/update_profile/"),
-   userData
-        // Add the file        );
+        delete profileData.profile_picture;
+        formData.append("profile", JSON.stringify(profileData));
+
+        // Add the file
         formData.append(
           "profile.profile_picture",
-          userData.profile.profile_picture      // Fetch the updated user data to ensure we have the latest profile picture URL
+          userData.profile.profile_picture
         );
 
         // Use getApiUrl instead of hardcoded URL
-        response = await axios.put(rror) {
-          getApiUrl("api/users/update_profile/"),ofile update error:", error);
+        response = await axios.put(
+          getApiUrl("api/users/update_profile/"),
           formData,
-          {success: false,
-            headers: {   error: error.response?.data?.message || "Profile update failed",
-              "Content-Type": "multipart/form-data",  };
-            },    }
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
-      } else {lue = {
+      } else {
         // Regular JSON request
         // Use getApiUrl instead of hardcoded URL
         response = await axios.put(
           getApiUrl("api/users/update_profile/"),
           userData
-        );logout,
-      }    updateProfile,
+        );
+      }
 
       // Fetch the updated user data to ensure we have the latest profile picture URL
       await fetchUserProfile();
-alue={value}>
-      return { success: true };  {!loading && children}
-    } catch (error) {  </AuthContext.Provider>
-      console.error("Profile update error:", error);  );
+
+      return { success: true };
+    } catch (error) {
+      console.error("Profile update error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Profile update failed",uth = () => {
+        error: error.response?.data?.message || "Profile update failed",
       };
-    }f (!context) {
-  };or("useAuth must be used within an AuthProvider");
-}
-  const value = {  return context;
+    }
+  };
+
+  const value = {
     user,
     token,
+    loading,
+    login,
+    register,
+    logout,
+    updateProfile,
+  };
 
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export default AuthContext;};  return context;  }    throw new Error("useAuth must be used within an AuthProvider");  if (!context) {  const context = useContext(AuthContext);export const useAuth = () => {};  );    </AuthContext.Provider>      {!loading && children}    <AuthContext.Provider value={value}>  return (  };    updateProfile,    logout,    register,    login,    loading,export default AuthContext;
+export default AuthContext;
