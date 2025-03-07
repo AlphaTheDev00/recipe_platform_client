@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; connect-src 'self' https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com; img-src 'self' https://images.unsplash.com data: blob: https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com; font-src 'self' data: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'
+  Content-Security-Policy: default-src 'self'; connect-src 'self' https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com https://*.herokuapp.com https://*.cloudinary.com http://localhost:8000; img-src 'self' https://*.cloudinary.com https://images.unsplash.com data: blob: https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com; font-src 'self' data: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

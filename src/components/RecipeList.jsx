@@ -86,6 +86,13 @@ const RecipeList = () => {
 
       let endpoint = "/api/recipes/";
 
+      // Add detailed debug logging
+      console.log("Fetching recipes with endpoint:", endpoint);
+      console.log("Active tab:", activeTab);
+      console.log("Current filters:", filters);
+      console.log("API Base URL:", getApiUrl());
+      console.log("User authenticated:", !!user);
+
       switch (activeTab) {
         case "my_recipes":
           endpoint = "/api/recipes/my_recipes/";
@@ -118,11 +125,26 @@ const RecipeList = () => {
       const queryString = params.toString();
       const url = `${getApiUrl(endpoint)}${
         queryString ? "?" + queryString : ""
-      }`; // Use getApiUrl
+      }`;
+      console.log("Full request URL:", url);
+
+      // Add auth header debugging
+      console.log(
+        "Auth headers:",
+        axios.defaults.headers.common["Authorization"] ? "Present" : "Missing"
+      );
 
       const response = await axios.get(url);
+      console.log("Response received:", response.status);
+      console.log("Data count:", response.data.length);
+
       setRecipes(response.data);
     } catch (err) {
+      console.error("Fetch error details:", err);
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+      }
       setError("Error fetching recipes. Please try again later.");
     } finally {
       setLoading(false);

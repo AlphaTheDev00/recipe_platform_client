@@ -57,7 +57,7 @@ const RecipeForm = () => {
               if (Array.isArray(parsedCategories)) {
                 // If it's an array of strings (category names), fetch the actual categories
                 const categoryResponse = await axios.get(
-                  "http://localhost:8000/api/categories/"
+                  getApiUrl("api/categories/") // Use getApiUrl instead of hardcoded localhost
                 );
                 const allCategories = categoryResponse.data;
 
