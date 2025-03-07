@@ -64,18 +64,23 @@ export const safeFetch = async (endpoint, options = {}) => {
     const url = getApiUrl(endpoint);
     console.log("Fetching from:", url);
 
-    // Skip availability check, always try real API first
-    // Only fall back to mock data if the actual API call fails
+    // Add cache-busting query parameter
+    const urlWithCache = url.includes('?') 
+      ? `${url}&_t=${Date.now()}` 
+      : `${url}?_t=${Date.now()}`;
 
-    // Add CORS mode but use 'no-cors' for simpler requests
+    // Always use CORS mode
     options.mode = "cors";
     options.credentials = "omit"; // Don't send credentials
 
-    // Add default headers
+    // Add cache-busting headers
     options.headers = {
       ...options.headers,
       "Content-Type": "application/json",
-      Accept: "application/json",
+      "Accept": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0"
     };
 
     // Get token from memory storage
@@ -93,7 +98,12 @@ export const safeFetch = async (endpoint, options = {}) => {
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     options.signal = controller.signal;
 
-    const response = await fetch(url, options);
+    console.log(`Making API request to ${urlWithCache} with options:`, {
+      ...options,
+      headers: { ...options.headers }
+    });
+
+    const response = await fetch(urlWithCache, options);
     clearTimeout(timeoutId);
 
     if (!response.ok) {
@@ -119,14 +129,23 @@ export const forceRefresh = async (endpoint) => {
     const url = getApiUrl(endpoint);
 
     // Add cache-busting query parameter
-    const bustCache = `?_=${Date.now()}`;
+    const bustCache = url.includes('?') 
+      ? `&_t=${Date.now()}` 
+      : `?_t=${Date.now()}`;
 
-    const response = await fetch(`${url}${bustCache}`, {
+    const fullUrl = `${url}${bustCache}`;
+    console.log(`Making cache-busting request to: ${fullUrl}`);
+
+    const response = await fetch(fullUrl, {
       method: "GET",
+      mode: "cors", // Explicitly set CORS mode
+      credentials: "omit", // Don't send credentials
       headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
+        "Pragma": "no-cache",
+        "Expires": "0",
       },
       cache: "no-store",
     });
@@ -140,7 +159,9 @@ export const forceRefresh = async (endpoint) => {
     return data;
   } catch (error) {
     console.error(`Error force refreshing ${endpoint}:`, error);
-    throw error;
+    // Try fallback with safeFetch
+    console.log(`Trying fallback method for ${endpoint}`);
+    return safeFetch(endpoint);
   }
 };
 

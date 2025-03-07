@@ -81,8 +81,11 @@ const RecipeDetail = () => {
         // Try fallback method
         try {
           console.log("Attempting fallback fetch method...");
-          const fallbackData = await safeFetch(`api/recipes/${id}/`);
+          // Store the endpoint in a variable for clarity
+          const recipeEndpoint = `api/recipes/${id}/`;
+          const fallbackData = await safeFetch(recipeEndpoint);
           if (fallbackData) {
+            console.log("Fallback fetch succeeded:", fallbackData);
             setRecipe(fallbackData);
             setError(null); // Clear error if fallback succeeds
           }

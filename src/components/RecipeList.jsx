@@ -127,7 +127,8 @@ const RecipeList = () => {
         setError("Error loading recipes");
         // Try fallback method
         try {
-          const fallbackData = await safeFetch(endpoint);
+          // Use the correct endpoint variable
+          const fallbackData = await safeFetch(fullEndpoint);
           setRecipes(fallbackData);
         } catch (fallbackErr) {
           console.error("Fallback fetch also failed:", fallbackErr);
@@ -189,27 +190,6 @@ const RecipeList = () => {
     } catch (err) {
       console.error("Manual refresh error:", err);
       setError("Error refreshing recipes");
-    } finally {
-      setLoading(false);
-    }
-          cooking_time: 20,
-          difficulty: "medium",
-        },
-        {
-          id: 2,
-          title: "Chicken Stir Fry",
-          description: "Quick and healthy meal",
-          cooking_time: 15,
-          difficulty: "easy",
-        },
-        {
-          id: 3,
-          title: "Chocolate Cake",
-          description: "Decadent dessert",
-          cooking_time: 60,
-          difficulty: "medium",
-        },
-      ]);
     } finally {
       setLoading(false);
     }
