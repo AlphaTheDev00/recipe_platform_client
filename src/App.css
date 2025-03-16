@@ -663,6 +663,23 @@ main.container {
   font-weight: 500 !important;
 }
 
+/* API Offline Notification */
+.api-offline-notification {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  padding: 0 15px;
+}
+
+.api-offline-notification .alert {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ffc107;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 /* Add margin top utility */
 .mt-2 {
   margin-top: 0.75rem !important;

@@ -3,7 +3,7 @@
   publish = "dist"
 
 [context.production.environment]
-  VITE_API_URL = "https://savora-recipe-b7493c60c573-2ac1db511588.herokuapp.com"
+  VITE_API_URL = "https://recipe-platform-api-2025-6a69309dbc66.herokuapp.com"
 
 # Handle SPA routing
 [[redirects]]

@@ -4,7 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import RecipeFilter from "./RecipeFilter";
 import Pagination from "./Pagination";
-import { getApiUrl, safeFetch, forceRefresh } from "../utils/api";
+import { getApiUrl, safeFetch, forceRefresh, clearCaches } from "../utils/api";
 
 const RecipeList = () => {
   const { user } = useAuth();
@@ -86,53 +86,76 @@ const RecipeList = () => {
         setLoading(true);
         setError(null);
         setCurrentPage(1);
-
+        
+        // Define the endpoint variable at the top level so it's accessible in catch blocks
         let endpoint = "api/recipes/";
-        switch (activeTab) {
-          case "my_recipes":
-            endpoint = "api/recipes/my_recipes/";
-            break;
-          case "top_rated":
-            endpoint = "api/recipes/top_rated/";
-            break;
-          case "recent":
-            endpoint = "api/recipes/recent/";
-            break;
-          case "trending":
-            endpoint = "api/recipes/trending/";
-            break;
-          case "recommendations":
-            endpoint = "api/recipes/recommendations/";
-            break;
-        }
-
-        // Build query parameters string
-        let queryParams = [];
-        if (filters.minRating) queryParams.push(`min_rating=${filters.minRating}`);
-        if (filters.maxCookingTime) queryParams.push(`max_cooking_time=${filters.maxCookingTime}`);
-        if (filters.difficulty) queryParams.push(`difficulty=${filters.difficulty}`);
-        if (filters.categoryId) queryParams.push(`category_id=${filters.categoryId}`);
-        if (filters.searchTerm) queryParams.push(`search=${filters.searchTerm}`);
-
-        const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
-        const fullEndpoint = `${endpoint}${queryString}`;
-
-        // Use forceRefresh to get fresh data every time
-        console.log("Forcing refresh of recipe data...");
-        const data = await forceRefresh(fullEndpoint);
-        console.log("Received fresh data:", data.length, "recipes");
-        setRecipes(data);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setError("Error loading recipes");
-        // Try fallback method
+        let queryString = "";
+        let fullEndpoint = "";
+        
         try {
-          // Use the correct endpoint variable
-          const fallbackData = await safeFetch(fullEndpoint);
-          setRecipes(fallbackData);
-        } catch (fallbackErr) {
-          console.error("Fallback fetch also failed:", fallbackErr);
+          // Clear all caches before fetching new data
+          try {
+            clearCaches();
+          } catch (cacheError) {
+            console.warn("Error clearing caches:", cacheError);
+            // Continue even if cache clearing fails
+          }
+          
+          // Fetch fresh recipe data
+
+          switch (activeTab) {
+            case "my_recipes":
+              endpoint = "api/recipes/my_recipes/";
+              break;
+            case "top_rated":
+              endpoint = "api/recipes/top_rated/";
+              break;
+            case "recent":
+              endpoint = "api/recipes/recent/";
+              break;
+            case "trending":
+              endpoint = "api/recipes/trending/";
+              break;
+            case "recommendations":
+              endpoint = "api/recipes/recommendations/";
+              break;
+          }
+
+          // Build query parameters string
+          let queryParams = [];
+          if (filters.minRating) queryParams.push(`min_rating=${filters.minRating}`);
+          if (filters.maxCookingTime) queryParams.push(`max_cooking_time=${filters.maxCookingTime}`);
+          if (filters.difficulty) queryParams.push(`difficulty=${filters.difficulty}`);
+          if (filters.categoryId) queryParams.push(`category_id=${filters.categoryId}`);
+          if (filters.searchTerm) queryParams.push(`search=${filters.searchTerm}`);
+
+          queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
+          fullEndpoint = `${endpoint}${queryString}`;
+
+          // Use forceRefresh to get fresh data every time
+
+          const data = await safeFetch(fullEndpoint);
+
+          setRecipes(data);
+        } catch (fetchErr) {
+          console.error("Primary fetch error:", fetchErr);
+          
+          // Try a simpler fetch as fallback
+          // Try fallback fetch
+          try {
+            // Use a simpler endpoint without query parameters
+            const fallbackData = await safeFetch(endpoint);
+
+            setRecipes(fallbackData);
+          } catch (fallbackErr) {
+            console.error("Fallback fetch also failed:", fallbackErr);
+            throw new Error("All fetch attempts failed");
+          }
         }
+      } catch (err) {
+        console.error("Could not load recipes:", err);
+        setError("Error loading recipes. Please check your connection and try again.");
+        setRecipes([]);
       } finally {
         setLoading(false);
       }
@@ -183,9 +206,9 @@ const RecipeList = () => {
       const fullEndpoint = `${endpoint}${queryString}`;
       
       // Force a fresh data fetch with timestamp to bust cache
-      console.log("Manual refresh triggered");
+
       const data = await forceRefresh(fullEndpoint);
-      console.log("Manual refresh complete, got", data.length, "recipes");
+
       setRecipes(data);
     } catch (err) {
       console.error("Manual refresh error:", err);

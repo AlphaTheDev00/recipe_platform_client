@@ -23,20 +23,9 @@ import { API_BASE_URL } from "./utils/api";
 function App() {
   const { user, logout } = useAuth();
 
-  // Test API connection on startup
+  // Log API URL on startup
   useEffect(() => {
-    const testApiConnection = async () => {
-      try {
-        console.log("Testing API connection to:", API_BASE_URL);
-        const response = await fetch(`${API_BASE_URL}/api/`);
-        const data = await response.json();
-        console.log("API connection successful:", data);
-      } catch (error) {
-        console.error("API connection failed:", error);
-      }
-    };
-
-    testApiConnection();
+    console.log("API URL configured as:", API_BASE_URL);
   }, []);
 
   return (
@@ -70,6 +59,7 @@ function App() {
                     Recipes
                   </Link>
                 </li>
+
                 {user && (
                   <>
                     <li className="nav-item">
@@ -144,6 +134,7 @@ function App() {
             <Route path="/favorites" element={<MyFavorites />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-recipes" element={<MyRecipes />} />
+
           </Routes>
         </main>
       </div>

@@ -26,9 +26,9 @@ const Login = () => {
     setLoading(true);
 
     try {
-      console.log("Submitting login with:", { username: formData.username });
+
       const result = await login(formData);
-      console.log("Login result:", result);
+
 
       if (result.success) {
         navigate("/recipes");
@@ -47,11 +47,11 @@ const Login = () => {
 
   return (
     <div className="auth-form-container">
-      <h2 className="mb-4">Login</h2>
+      <h2>Welcome Back</h2>
       {error && <div className="alert alert-danger">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
+        <div className="form-group">
           <label htmlFor="username" className="form-label">
             Username
           </label>
@@ -60,13 +60,14 @@ const Login = () => {
             className="form-control"
             id="username"
             name="username"
+            placeholder="Enter your username"
             value={formData.username}
             onChange={handleChange}
             required
           />
         </div>
 
-        <div className="mb-3">
+        <div className="form-group">
           <label htmlFor="password" className="form-label">
             Password
           </label>
@@ -75,6 +76,7 @@ const Login = () => {
             className="form-control"
             id="password"
             name="password"
+            placeholder="Enter your password"
             value={formData.password}
             onChange={handleChange}
             required
@@ -83,11 +85,15 @@ const Login = () => {
 
         <button
           type="submit"
-          className="btn btn-primary w-100"
+          className="btn btn-primary w-100 mt-3"
           disabled={loading}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Logging in..." : "Sign In"}
         </button>
+        
+        <div className="text-center mt-3">
+          <p>Don't have an account? <a href="/register">Create one now</a></p>
+        </div>
       </form>
     </div>
   );

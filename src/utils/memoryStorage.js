@@ -17,6 +17,9 @@ const memoryStorage = {
     memoryStore = {};
     return true;
   },
+  getAll() {
+    return { ...memoryStore };
+  },
 };
 
 export default memoryStorage;

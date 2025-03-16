@@ -5,7 +5,7 @@ import RatingAndComments from "./RatingAndComments";
 import { useAuth } from "../context/AuthContext";
 import FavoriteButton from "./FavoriteButton";
 import CategoryBadges from "./CategoryBadges";
-import { getApiUrl, forceRefresh, safeFetch } from "../utils/api"; // Import API utilities
+import { getApiUrl, forceRefresh, safeFetch, clearCaches } from "../utils/api"; // Import API utilities
 
 const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
@@ -68,10 +68,12 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        console.log(`Fetching fresh recipe data for ID: ${id}`);
+
+        // Clear all caches before fetching new data
+        clearCaches();
         // Use forceRefresh to bypass cache
         const data = await forceRefresh(`api/recipes/${id}/`);
-        console.log("Received fresh recipe data:", data);
+
         setRecipe(data);
         setLoading(false);
       } catch (err) {
@@ -80,12 +82,12 @@ const RecipeDetail = () => {
         
         // Try fallback method
         try {
-          console.log("Attempting fallback fetch method...");
+          // Attempting fallback fetch method
           // Store the endpoint in a variable for clarity
           const recipeEndpoint = `api/recipes/${id}/`;
           const fallbackData = await safeFetch(recipeEndpoint);
           if (fallbackData) {
-            console.log("Fallback fetch succeeded:", fallbackData);
+
             setRecipe(fallbackData);
             setError(null); // Clear error if fallback succeeds
           }

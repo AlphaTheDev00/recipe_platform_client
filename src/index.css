@@ -133,3 +133,88 @@ main.container,
   width: 100% !important;
   max-width: 280px !important;
 }
+
+/* Auth Form Styling */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.auth-form-container {
+  max-width: 450px !important;
+  margin: 2rem auto !important;
+  padding: 2rem !important;
+  background-color: #fff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  animation: fadeInScale 0.5s ease-out !important;
+}
+
+.auth-form-container:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.auth-form-container h2 {
+  color: #333 !important;
+  text-align: center !important;
+  margin-bottom: 1.5rem !important;
+  font-weight: 600 !important;
+}
+
+.auth-form-container form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.auth-form-container .form-control {
+  padding: 0.75rem !important;
+  border-radius: 6px !important;
+  border: 1px solid #ddd !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.auth-form-container .form-control:focus {
+  border-color: #4a6cfa !important;
+  box-shadow: 0 0 0 3px rgba(74, 108, 250, 0.2) !important;
+}
+
+.auth-form-container .btn-primary {
+  background-color: #4a6cfa !important;
+  border-color: #4a6cfa !important;
+  padding: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s ease !important;
+}
+
+.auth-form-container .btn-primary:hover {
+  background-color: #3a5cf9 !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 4px 8px rgba(74, 108, 250, 0.3) !important;
+}
+
+.auth-form-container .btn-primary:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 4px rgba(74, 108, 250, 0.2) !important;
+}
+
+.auth-form-container .alert {
+  border-radius: 6px !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.auth-form-container .alert-info {
+  background-color: #e8f4fd !important;
+  border-color: #c5e7fb !important;
+  color: #0c5460 !important;
+}

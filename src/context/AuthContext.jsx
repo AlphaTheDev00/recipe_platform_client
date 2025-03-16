@@ -77,12 +77,20 @@ export const AuthProvider = ({ children }) => {
         username: credentials.username,
         password: credentials.password ? "***" : "missing",
       });
+      console.log("Using API URL:", API_BASE_URL);
 
       // Use the direct API_BASE_URL for authentication
-      const response = await fetch(`${API_BASE_URL}/api-token-auth/`, {
+      const loginUrl = `${API_BASE_URL}/api-token-auth/`;
+      console.log("Full login URL:", loginUrl);
+      
+      const response = await fetch(loginUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
         },
         body: JSON.stringify({
           username: credentials.username,
@@ -90,9 +98,14 @@ export const AuthProvider = ({ children }) => {
         }),
         mode: "cors",
         credentials: "omit",
+        cache: "no-store"
       });
 
+      console.log("Login response status:", response.status);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Login error response:", errorText);
         return {
           success: false,
           error: "Invalid username or password",
@@ -128,13 +141,40 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       console.log("Registering user:", userData.username);
-      const response = await axios.post(
-        getApiUrl("api/users/register/"),
-        userData
-      );
-
-      console.log("Registration response:", response.data);
-      const { token, user_id, email } = response.data;
+      console.log("Using API URL:", API_BASE_URL);
+      
+      const registerUrl = `${API_BASE_URL}/api/users/register/`;
+      console.log("Full register URL:", registerUrl);
+      
+      const response = await fetch(registerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        },
+        body: JSON.stringify(userData),
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store"
+      });
+      
+      console.log("Registration response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Registration error response:", errorText);
+        return {
+          success: false,
+          error: "Registration failed. Please try again."
+        };
+      }
+      
+      const data = await response.json();
+      console.log("Registration response data:", data);
+      const { token, user_id, email } = data;
 
       // Save token in local storage
       safeStorage.setItem("token", token);
@@ -152,17 +192,9 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("Registration error details:", error);
-      if (error.response) {
-        console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data);
-      }
       return {
         success: false,
-        error:
-          error.response?.data?.username?.[0] ||
-          error.response?.data?.email?.[0] ||
-          error.response?.data?.password?.[0] ||
-          "Registration failed. Please try again.",
+        error: "Server error. Please try again later."
       };
     }
   };
@@ -188,12 +220,28 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (userData) => {
     try {
-      // Check if userData contains a File object (for profile picture)
-      const containsFile =
-        userData.profile && userData.profile.profile_picture instanceof File;
-
+      console.log("Updating profile with data:", userData);
+      
       let response;
-      if (containsFile) {
+      
+      // Check if userData is a FormData object
+      if (userData instanceof FormData) {
+        console.log("Using FormData for profile update");
+        
+        // Use FormData directly
+        response = await axios.put(
+          getApiUrl("api/users/update_profile/"),
+          userData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } 
+      // Check if userData contains a File object (for profile picture)
+      else if (userData.profile && userData.profile.profile_picture instanceof File) {
+        console.log("Converting object with file to FormData");
         // If there's a file, use FormData
         const formData = new FormData();
 
@@ -226,8 +274,8 @@ export const AuthProvider = ({ children }) => {
           }
         );
       } else {
+        console.log("Using regular JSON for profile update");
         // Regular JSON request
-        // Use getApiUrl instead of hardcoded URL
         response = await axios.put(
           getApiUrl("api/users/update_profile/"),
           userData

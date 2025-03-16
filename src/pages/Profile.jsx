@@ -104,11 +104,13 @@ const Profile = () => {
     // Add profile picture if exists
     if (profilePicture) {
       formDataObj.append('profile_picture', profilePicture);
+      // Also append the profile picture with the correct field name for the backend
+      formDataObj.append('profile.profile_picture', profilePicture);
     }
     
     try {
       // Update user profile data with all changes at once
-      const result = await updateProfile(updateData);
+      const result = await updateProfile(formDataObj);
       
       if (result.success) {
         setSuccess('Profile updated successfully');
